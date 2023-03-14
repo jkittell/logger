@@ -8,15 +8,15 @@ import (
 )
 
 type ILogger interface {
-	Debug(messages string)
-	Debugf(message string, value ...interface{})
-	Info(message string)
-	Infof(message string, value ...interface{})
+	Debug(value ...any)
+	Debugf(message string, value ...any)
+	Info(value ...any)
+	Infof(message string, value ...any)
 }
 
-type Logger struct {
-	Filepath   string
-	FileHandle *os.File
+type logger struct {
+	filepath   string
+	fileHandle *os.File
 }
 
 func New(logLocation string) ILogger {
@@ -34,36 +34,38 @@ func New(logLocation string) ILogger {
 
 	filePath = logFile.Name()
 	fileHandle = logFile
-	return &Logger{
-		Filepath:   filePath,
-		FileHandle: fileHandle,
+	return &logger{
+		filepath:   filePath,
+		fileHandle: fileHandle,
 	}
 }
 
 // Info logs things that users care about when using your software.
-func (logger *Logger) Info(message string) {
-	log(logger, message)
+func (logger *logger) Info(value ...any) {
+	log(logger, fmt.Sprintln(value))
 }
 
 // Info logs things that users care about when using your software.
-func (logger *Logger) Infof(message string, value ...interface{}) {
-	log(logger, fmt.Sprintf(message, value...))
+func (logger *logger) Infof(message string, value ...interface{}) {
+	msg := fmt.Sprintf(message, value...) + "\n"
+	log(logger, msg)
 }
 
 // Debug logs things that developers care about when they are developing or debugging software.
-func (logger *Logger) Debug(message string) {
-	log(logger, message)
+func (logger *logger) Debug(value ...any) {
+	log(logger, fmt.Sprintln(value))
 }
 
 // Debug logs things that developers care about when they are developing or debugging software.
-func (logger *Logger) Debugf(message string, value ...interface{}) {
-	log(logger, fmt.Sprintf(message, value...))
+func (logger *logger) Debugf(message string, value ...interface{}) {
+	msg := fmt.Sprintf(message, value...) + "\n"
+	log(logger, msg)
 }
 
-func log(logger *Logger, message string) {
-	logMessageData := time.Now().Format("2006/01/02 15:04:05 ") + message + "\n"
+func log(logger *logger, message string) {
+	logMessageData := time.Now().Format("2006/01/02 15:04:05 ") + message
 	fmt.Println(logMessageData)
-	_, err := logger.FileHandle.WriteString(logMessageData)
+	_, err := logger.fileHandle.WriteString(logMessageData)
 	if err != nil {
 		panic(err)
 	}
