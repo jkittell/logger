@@ -1,3 +1,3 @@
-module logger
+module github.com/jkittell/logger
 
-go 1.18
+go 1.20
