@@ -12,21 +12,18 @@ type Logger struct {
 	fileHandle *os.File
 }
 
-func NewLogger(filename string) *Logger {
-	var filePath string
+func NewLogger(dir, filename string) *Logger {
 	var fileHandle *os.File
 
-	location := filepath.Join("/Users/jonathan.kittell/go/src/temp/log/", filename)
+	location := filepath.Join(dir, filename)
 
 	logFile, err := os.OpenFile(location, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)
 	}
-
-	filePath = logFile.Name()
 	fileHandle = logFile
 	return &Logger{
-		filepath:   filePath,
+		filepath:   location,
 		fileHandle: fileHandle,
 	}
 }
