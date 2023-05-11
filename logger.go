@@ -1,4 +1,4 @@
-package gologger
+package logger
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ type Logger struct {
 	fileHandle *os.File
 }
 
-func NewLogger(dir, filename string) *Logger {
+func New(dir, filename string) *Logger {
 	var fileHandle *os.File
 
 	location := filepath.Join(dir, filename)
@@ -29,31 +29,30 @@ func NewLogger(dir, filename string) *Logger {
 }
 
 // Info logs things that users care about when using your software.
-func (Logger *Logger) Info(value ...any) {
-	log(Logger, fmt.Sprintln(value))
+func (logger *Logger) Info(value ...any) {
+	log(logger, fmt.Sprintln(value))
 }
 
-// Info logs things that users care about when using your software.
-func (Logger *Logger) Infof(message string, value ...interface{}) {
+// Infof logs things that users care about when using your software.
+func (logger *Logger) Infof(message string, value ...interface{}) {
 	msg := fmt.Sprintf(message, value...) + "\n"
-	log(Logger, msg)
+	log(logger, msg)
 }
 
 // Debug logs things that developers care about when they are developing or debugging software.
-func (Logger *Logger) Debug(value ...any) {
-	log(Logger, fmt.Sprintln(value))
+func (logger *Logger) Debug(value ...any) {
+	log(logger, fmt.Sprintln(value))
 }
 
-// Debug logs things that developers care about when they are developing or debugging software.
-func (Logger *Logger) Debugf(message string, value ...interface{}) {
+// Debugf logs things that developers care about when they are developing or debugging software.
+func (logger *Logger) Debugf(message string, value ...interface{}) {
 	msg := fmt.Sprintf(message, value...) + "\n"
-	log(Logger, msg)
+	log(logger, msg)
 }
 
-func log(Logger *Logger, message string) {
+func log(logger *Logger, message string) {
 	logMessageData := time.Now().Format("2006/01/02 15:04:05 ") + message
-	fmt.Println(logMessageData)
-	_, err := Logger.fileHandle.WriteString(logMessageData)
+	_, err := logger.fileHandle.WriteString(logMessageData)
 	if err != nil {
 		panic(err)
 	}
