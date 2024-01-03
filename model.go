@@ -5,10 +5,6 @@ import (
 	"time"
 )
 
-type Model struct {
-	LogEntry LogEntry
-}
-
 type Log struct {
 	Name string `json:"name"`
 	Data string `json:"data"`
