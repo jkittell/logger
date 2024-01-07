@@ -14,7 +14,7 @@ type LogHandler struct {
 }
 
 func NewLogHandler() (*LogHandler, error) {
-	logs, err := database.NewMongoDB[LogEntry](".env", "logs")
+	logs, err := database.NewMongoDB[LogEntry]("logs")
 	return &LogHandler{logs: logs}, err
 }
 

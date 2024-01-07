@@ -1,6 +1,10 @@
 services:
   logger:
     image: jpkitt/logger:latest
+    environment:
+      - MONGODB_HOST=${MONGODB_HOST}
+      - MONGODB_PORT=${MONGODB_PORT}
+      - MONGODB_NAME=${MONGODB_NAME}
     ports:
       - 80:80
     restart: unless-stopped
