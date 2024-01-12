@@ -8,7 +8,6 @@ import (
 
 func main() {
 	amqpServerURL := os.Getenv("AMQP_SERVER_URL")
-	// Create a new RabbitMQ connection.
 	connectRabbitMQ, err := amqp.Dial(amqpServerURL)
 	if err != nil {
 		log.Fatal(err, " ", amqpServerURL)

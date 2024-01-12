@@ -3,33 +3,38 @@ package main
 import (
 	"fmt"
 	"github.com/streadway/amqp"
+	"log"
 	"os"
 	"testing"
 )
 
 func TestLogger_WriteLog(t *testing.T) {
-	// Create a new RabbitMQ connection.
 	conn, err := amqp.Dial(os.Getenv("AMQP_SERVER_URL"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer conn.Close()
 
-	// Let's start by opening a channel to our RabbitMQ
-	// instance over the connection we have already
-	// established.
 	ch, err := conn.Channel()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer ch.Close()
 
-	// With the instance and declare Queues that we can
-	// publish and subscribe to.
+	_, err = ch.QueueDeclare(
+		"LoggerService", // queue name
+		true,            // durable
+		false,           // auto delete
+		false,           // exclusive
+		false,           // no wait
+		nil,             // arguments
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	for i := 0; i < 10; i++ {
 		body := fmt.Sprintf("hello %d", i)
-		// Create a message to publish.
 		message := amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        []byte(body),
