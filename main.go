@@ -15,16 +15,12 @@ func main() {
 	}
 	defer connectRabbitMQ.Close()
 
-	// Opening a channel to our RabbitMQ instance over
-	// the connection we have already established.
 	ch, err := connectRabbitMQ.Channel()
 	if err != nil {
 		panic(err)
 	}
 	defer ch.Close()
 
-	// With the instance and declare Queues that we can
-	// publish and subscribe to.
 	_, err = ch.QueueDeclare(
 		"LoggerService", // queue name
 		true,            // durable
@@ -37,7 +33,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Subscribing to LogService for getting messages.
 	messages, err := ch.Consume(
 		"LoggerService", // queue name
 		"",              // consumer
@@ -48,17 +43,14 @@ func main() {
 		nil,             // arguments
 	)
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
-
-	log.Println("Successfully connected to RabbitMQ")
-	log.Println("Waiting for messages")
 
 	logger, err := NewLogger()
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Make a channel to receive messages into infinite loop.
+
 	done := make(chan bool)
 
 	go func() {

@@ -24,6 +24,9 @@ func TestLogger_WriteLog(t *testing.T) {
 	}
 	defer ch.Close()
 
+	// With the instance and declare Queues that we can
+	// publish and subscribe to.
+
 	for i := 0; i < 10; i++ {
 		body := fmt.Sprintf("hello %d", i)
 		// Create a message to publish.
@@ -32,7 +35,6 @@ func TestLogger_WriteLog(t *testing.T) {
 			Body:        []byte(body),
 		}
 
-		// Attempt to publish a message to the queue.
 		if err = ch.Publish(
 			"",              // exchange
 			"LoggerService", // queue name
