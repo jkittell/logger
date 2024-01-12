@@ -7,6 +7,5 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /logger
 
 FROM busybox
 COPY --from=builder /logger /home
-EXPOSE 80
 WORKDIR /home
 ENTRYPOINT [ "./logger" ]

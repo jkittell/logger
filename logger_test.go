@@ -1,40 +1,46 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/jkittell/data/api/client"
+	"fmt"
+	"github.com/streadway/amqp"
+	"os"
 	"testing"
 )
 
-func TestLogHandler_WriteLog(t *testing.T) {
-	log := Log{
-		Name: "test",
-		Data: gofakeit.Email(),
-	}
-
-	data, _ := json.Marshal(log)
-	res, err := client.Post("http://127.0.0.1:/log", nil, bytes.NewReader(data))
+func TestLogger_WriteLog(t *testing.T) {
+	// Create a new RabbitMQ connection.
+	conn, err := amqp.Dial(os.Getenv("AMQP_SERVER_URL"))
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer conn.Close()
 
-	t.Log(string(res))
-}
+	// Let's start by opening a channel to our RabbitMQ
+	// instance over the connection we have already
+	// established.
+	ch, err := conn.Channel()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ch.Close()
 
-func BenchmarkLogHandler_WriteLog(b *testing.B) {
-	// run the Fib function b.N times
-	for n := 0; n < b.N; n++ {
-		log := Log{
-			Name: "test",
-			Data: gofakeit.Email(),
+	for i := 0; i < 10; i++ {
+		body := fmt.Sprintf("hello %d", i)
+		// Create a message to publish.
+		message := amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        []byte(body),
 		}
 
-		data, _ := json.Marshal(log)
-		_, err := client.Post("http://127.0.0.1:/log", nil, bytes.NewReader(data))
-		if err != nil {
-			b.Fatal(err)
+		// Attempt to publish a message to the queue.
+		if err = ch.Publish(
+			"",              // exchange
+			"LoggerService", // queue name
+			false,           // mandatory
+			false,           // immediate
+			message,         // message to publish
+		); err != nil {
+			t.Fatal(err)
 		}
 	}
 }
