@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/streadway/amqp"
 	"log"
@@ -34,10 +35,16 @@ func TestLogger_WriteLog(t *testing.T) {
 	}
 
 	for i := 0; i < 10; i++ {
-		body := fmt.Sprintf("hello %d", i)
+		msg := fmt.Sprintf("hello %d", i)
+		entry := LogEntry{
+			Name:    "testing",
+			Message: msg,
+		}
+
+		data, _ := json.Marshal(entry)
 		message := amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte(body),
+			ContentType: "application/json",
+			Body:        data,
 		}
 
 		if err = ch.Publish(

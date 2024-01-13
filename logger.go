@@ -8,22 +8,27 @@ import (
 )
 
 type LogEntry struct {
-	Log       any       `bson:"log" json:"log"`
+	Name    string `json:"name"`
+	Message string `bson:"message" json:"message"`
+}
+
+type logEntry struct {
+	Message   string    `bson:"message" json:"message"`
 	CreatedAt time.Time `bson:"created_at" json:"created_at"`
 }
 
-type Logger struct {
-	logs database.MongoDB[LogEntry]
+type logger struct {
+	logs database.MongoDB[logEntry]
 }
 
-func NewLogger() (*Logger, error) {
-	logs, err := database.NewMongoDB[LogEntry]("logs")
-	return &Logger{logs: logs}, err
+func newLogger() (*logger, error) {
+	logs, err := database.NewMongoDB[logEntry]()
+	return &logger{logs: logs}, err
 }
 
-func (l Logger) WriteLog(data any) {
-	err := l.logs.Insert(context.TODO(), LogEntry{
-		Log:       data,
+func (l logger) log(entry LogEntry) {
+	err := l.logs.Insert(context.TODO(), entry.Name, logEntry{
+		Message:   entry.Message,
 		CreatedAt: time.Now(),
 	})
 	if err != nil {

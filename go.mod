@@ -3,7 +3,7 @@ module github.com/jkittell/logger
 go 1.20
 
 require (
-	github.com/jkittell/data v0.0.0-20240107145528-404dff51dc85
+	github.com/jkittell/data v0.0.0-20240113010817-0f4d3f3579c2
 	github.com/spf13/viper v1.18.2
 	github.com/streadway/amqp v1.1.0
 )

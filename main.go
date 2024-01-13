@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/streadway/amqp"
 	"log"
 	"os"
@@ -45,7 +46,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	logger, err := NewLogger()
+	loggerService, err := newLogger()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -54,7 +55,12 @@ func main() {
 
 	go func() {
 		for message := range messages {
-			logger.WriteLog(message.Body)
+			var entry LogEntry
+			err = json.Unmarshal(message.Body, &entry)
+			if err != nil {
+				log.Println(err)
+			}
+			loggerService.log(entry)
 		}
 	}()
 
