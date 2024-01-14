@@ -10,7 +10,7 @@ import (
 
 type logEntry struct {
 	Message   string    `bson:"message" json:"message"`
-	CreatedAt time.Time `bson:"created_at" json:"created_at"`
+	Timestamp time.Time `bson:"timestamp" json:"timestamp"`
 }
 
 type logger struct {
@@ -26,7 +26,7 @@ func newLogger() (*logger, error) {
 func (l logger) log(message string) {
 	err := l.logs.Insert(context.TODO(), l.collectionName, logEntry{
 		Message:   message,
-		CreatedAt: time.Now(),
+		Timestamp: time.Now(),
 	})
 	if err != nil {
 		log.Println(err)
