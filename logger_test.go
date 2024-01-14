@@ -14,7 +14,7 @@ import (
 
 func TestLogger(t *testing.T) {
 	conn, err := rabbitmq.NewConn(
-		os.Getenv("RABBITMQ_SERVER_URL"),
+		os.Getenv("RABBITMQ_URL"),
 		rabbitmq.WithConnectionOptionsLogging,
 	)
 	if err != nil {
@@ -25,7 +25,7 @@ func TestLogger(t *testing.T) {
 	publisher, err := rabbitmq.NewPublisher(
 		conn,
 		rabbitmq.WithPublisherOptionsLogging,
-		rabbitmq.WithPublisherOptionsExchangeName("events"),
+		rabbitmq.WithPublisherOptionsExchangeName(os.Getenv("RABBITMQ_EXCHANGE_NAME")),
 		rabbitmq.WithPublisherOptionsExchangeDeclare,
 	)
 	if err != nil {
@@ -67,7 +67,7 @@ func TestLogger(t *testing.T) {
 				rabbitmq.WithPublishOptionsContentType("application/json"),
 				rabbitmq.WithPublishOptionsMandatory,
 				rabbitmq.WithPublishOptionsPersistentDelivery,
-				rabbitmq.WithPublishOptionsExchange("events"),
+				rabbitmq.WithPublishOptionsExchange(os.Getenv("RABBITMQ_EXCHANGE_NAME")),
 			)
 			if err != nil {
 				log.Println(err)

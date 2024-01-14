@@ -16,7 +16,7 @@ func main() {
 	}
 
 	conn, err := rabbitmq.NewConn(
-		os.Getenv("RABBITMQ_SERVER_URL"),
+		os.Getenv("RABBITMQ_URL"),
 		rabbitmq.WithConnectionOptionsLogging,
 	)
 	if err != nil {
@@ -30,9 +30,9 @@ func main() {
 			loggerService.log(string(d.Body))
 			return rabbitmq.Ack
 		},
-		"q.logs",
-		rabbitmq.WithConsumerOptionsRoutingKey("logs"),
-		rabbitmq.WithConsumerOptionsExchangeName("events"),
+		os.Getenv("RABBITMQ_QUEUE"),
+		rabbitmq.WithConsumerOptionsRoutingKey(os.Getenv("RABBITMQ_ROUTING_KEY")),
+		rabbitmq.WithConsumerOptionsExchangeName(os.Getenv("RABBITMQ_EXCHANGE_NAME")),
 		rabbitmq.WithConsumerOptionsExchangeDeclare,
 	)
 	if err != nil {

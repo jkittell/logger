@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/jkittell/data/database"
 	"log"
+	"os"
 	"time"
 )
 
@@ -13,16 +14,17 @@ type logEntry struct {
 }
 
 type logger struct {
-	logs database.MongoDB[logEntry]
+	collectionName string
+	logs           database.MongoDB[logEntry]
 }
 
 func newLogger() (*logger, error) {
 	logs, err := database.NewMongoDB[logEntry]()
-	return &logger{logs: logs}, err
+	return &logger{collectionName: os.Getenv("MONGODB_COLLECTION_NAME"), logs: logs}, err
 }
 
 func (l logger) log(message string) {
-	err := l.logs.Insert(context.TODO(), "logs", logEntry{
+	err := l.logs.Insert(context.TODO(), l.collectionName, logEntry{
 		Message:   message,
 		CreatedAt: time.Now(),
 	})
