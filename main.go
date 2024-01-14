@@ -1,67 +1,56 @@
 package main
 
 import (
-	"encoding/json"
-	"github.com/streadway/amqp"
+	"fmt"
+	"github.com/wagslane/go-rabbitmq"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
-	amqpServerURL := os.Getenv("AMQP_SERVER_URL")
-	connectRabbitMQ, err := amqp.Dial(amqpServerURL)
-	if err != nil {
-		log.Fatal(err, " ", amqpServerURL)
-	}
-	defer connectRabbitMQ.Close()
-
-	ch, err := connectRabbitMQ.Channel()
-	if err != nil {
-		panic(err)
-	}
-	defer ch.Close()
-
-	_, err = ch.QueueDeclare(
-		"LoggerService", // queue name
-		true,            // durable
-		false,           // auto delete
-		false,           // exclusive
-		false,           // no wait
-		nil,             // arguments
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	messages, err := ch.Consume(
-		"LoggerService", // queue name
-		"",              // consumer
-		true,            // auto-ack
-		false,           // exclusive
-		false,           // no local
-		false,           // no wait
-		nil,             // arguments
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	loggerService, err := newLogger()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	done := make(chan bool)
+	conn, err := rabbitmq.NewConn(
+		os.Getenv("RABBITMQ_SERVER_URL"),
+		rabbitmq.WithConnectionOptionsLogging,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	consumer, err := rabbitmq.NewConsumer(
+		conn,
+		func(d rabbitmq.Delivery) rabbitmq.Action {
+			loggerService.log(string(d.Body))
+			return rabbitmq.Ack
+		},
+		"q.logs",
+		rabbitmq.WithConsumerOptionsRoutingKey("logs"),
+		rabbitmq.WithConsumerOptionsExchangeName("events"),
+		rabbitmq.WithConsumerOptionsExchangeDeclare,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer consumer.Close()
+
+	// block main thread - wait for shutdown signal
+	sigs := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
+
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		for message := range messages {
-			var entry LogEntry
-			err = json.Unmarshal(message.Body, &entry)
-			if err != nil {
-				log.Println(err)
-			}
-			loggerService.log(entry)
-		}
+		sig := <-sigs
+		fmt.Println()
+		fmt.Println(sig)
+		done <- true
 	}()
 
 	<-done
