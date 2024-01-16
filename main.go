@@ -1,56 +1,65 @@
 package main
 
 import (
-	"fmt"
-	"github.com/wagslane/go-rabbitmq"
+	"context"
+	"github.com/jkittell/data/database"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"os"
-	"os/signal"
-	"syscall"
+	"time"
 )
 
-func main() {
-	loggerService, err := newLogger()
+func failOnError(err error, msg string) {
 	if err != nil {
-		log.Fatal(err)
+		log.Panicf("%s: %s", msg, err)
 	}
+}
 
-	conn, err := rabbitmq.NewConn(
-		os.Getenv("RABBITMQ_URL"),
-		rabbitmq.WithConnectionOptionsLogging,
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
+func main() {
+	db, err := database.NewMongoDB[logEntry]()
+	failOnError(err, "Failed to connect to mongodb")
+	conn, err := amqp.Dial(os.Getenv("RABBITMQ_URL"))
+	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 
-	consumer, err := rabbitmq.NewConsumer(
-		conn,
-		func(d rabbitmq.Delivery) rabbitmq.Action {
-			loggerService.log(string(d.Body))
-			return rabbitmq.Ack
-		},
-		os.Getenv("RABBITMQ_QUEUE"),
-		rabbitmq.WithConsumerOptionsRoutingKey(os.Getenv("RABBITMQ_ROUTING_KEY")),
-		rabbitmq.WithConsumerOptionsExchangeName(os.Getenv("RABBITMQ_EXCHANGE_NAME")),
-		rabbitmq.WithConsumerOptionsExchangeDeclare,
+	ch, err := conn.Channel()
+	failOnError(err, "Failed to open a channel")
+	defer ch.Close()
+
+	q, err := ch.QueueDeclare(
+		"logs", // name
+		false,  // durable
+		false,  // delete when unused
+		false,  // exclusive
+		false,  // no-wait
+		nil,    // arguments
 	)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer consumer.Close()
+	failOnError(err, "Failed to declare a queue")
 
-	// block main thread - wait for shutdown signal
-	sigs := make(chan os.Signal, 1)
-	done := make(chan bool, 1)
+	messages, err := ch.Consume(
+		q.Name, // queue
+		"",     // consumer
+		true,   // auto-ack
+		false,  // exclusive
+		false,  // no-local
+		false,  // no-wait
+		nil,    // args
+	)
+	failOnError(err, "Failed to register a consumer")
 
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	done := make(chan bool)
 
 	go func() {
-		sig := <-sigs
-		fmt.Println()
-		fmt.Println(sig)
-		done <- true
+		for d := range messages {
+			entry := logEntry{
+				Message:   string(d.Body),
+				Timestamp: time.Now(),
+			}
+			err = db.Insert(context.TODO(), os.Getenv("LOG_NAME"), entry)
+			if err != nil {
+				log.Println(err)
+			}
+		}
 	}()
 
 	<-done

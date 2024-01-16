@@ -3,13 +3,10 @@ services:
     image: jpkitt/logger:latest
     environment:
       - RABBITMQ_URL=${RABBITMQ_URL}
-      - RABBITMQ_EXCHANGE_NAME=${RABBITMQ_EXCHANGE_NAME}
-      - RABBITMQ_ROUTING_KEY=${RABBITMQ_ROUTING_KEY}
-      - RABBITMQ_QUEUE=${RABBITMQ_QUEUE}
       - MONGODB_HOST=${MONGODB_HOST}
       - MONGODB_PORT=${MONGODB_PORT}
       - MONGODB_NAME=${MONGODB_NAME}
-      - MONGODB_COLLECTION_NAME=${MONGODB_COLLECTION_NAME}
+      - LOG_NAME=${LOG_NAME} # log name
     restart: unless-stopped
     depends_on:
       mongodb:
